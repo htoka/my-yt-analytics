@@ -3,44 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YT Analytics Dashboard</title>
+    <title>HYOCHIVE Analytics</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root {
-            --bg: #ffffff;
-            --text: #000000;
-            --gray-light: #f5f5f5;
-            --gray-mid: #e0e0e0;
-            --gray-dark: #333333;
-            --accent: #000000;
-        }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; min-height: 100vh; }
-        nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; border-bottom: 1px solid var(--gray-mid); position: sticky; top: 0; background: white; z-index: 100; }
-        .logo { font-size: 1.5rem; font-weight: 800; letter-spacing: -1px; }
-        .nav-links button { background: none; border: none; padding: 8px 16px; cursor: pointer; font-weight: 500; color: #666; transition: 0.2s; }
-        .nav-links button.active { color: var(--text); border-bottom: 2px solid var(--text); }
-        main { padding: 40px; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box; flex-grow: 1; }
+        :root { --bg: #ffffff; --text: #000000; --gray-light: #f5f5f5; --gray-mid: #e0e0e0; --accent: #000000; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; }
+        nav { display: flex; justify-content: space-between; padding: 20px 40px; border-bottom: 1px solid var(--gray-mid); position: sticky; top:0; background:white; z-index:10; }
+        .logo { font-size: 1.5rem; font-weight: 800; }
+        .nav-links button { background:none; border:none; padding: 10px 20px; cursor:pointer; font-weight:500; color:#666; }
+        .nav-links button.active { color:var(--text); border-bottom:2px solid var(--text); }
+        main { padding: 40px; max-width: 1200px; margin: 0 auto; }
         .section { display: none; }
         .section.active { display: block; }
-        .chart-container { background: var(--gray-light); padding: 20px; border-radius: 12px; margin-bottom: 40px; border: 1px solid var(--gray-mid); }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .card { border: 1px solid var(--gray-mid); border-radius: 12px; padding: 20px; transition: transform 0.2s; }
-        .card:hover { transform: translateY(-4px); }
-        .card img { width: 60px; height: 60px; border-radius: 50%; margin-bottom: 15px; border: 1px solid var(--gray-mid); }
-        .stat-label { font-size: 0.8rem; color: #666; margin-bottom: 4px; }
-        .stat-value { font-size: 1.2rem; font-weight: 700; margin-bottom: 12px; }
-        .input-group { margin-bottom: 15px; }
-        input, select { width: 100%; padding: 10px; border: 1px solid var(--gray-mid); border-radius: 6px; margin-top: 5px; }
-        button.primary { background: var(--text); color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: 600; }
-        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 1000; font-weight: 700; }
+        .chart-container { background: var(--gray-light); padding: 20px; border-radius: 12px; margin-bottom: 40px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .card { border: 1px solid var(--gray-mid); border-radius: 12px; padding: 20px; }
+        .card img { width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px; }
+        textarea, input, select { width: 100%; padding: 12px; border: 1px solid var(--gray-mid); border-radius: 8px; margin: 10px 0; box-sizing: border-box; }
+        button.primary { background: var(--text); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 700; }
+        #loading { position: fixed; inset: 0; background: white; display: flex; justify-content: center; align-items: center; z-index: 100; font-weight: 700; }
     </style>
 </head>
 <body>
-    <div id="loading">데이터 불러오는 중...</div>
-
+    <div id="loading">데이터 로딩 중...</div>
     <nav>
-        <div class="logo">DASHBOARD</div>
+        <div class="logo">HYOCHIVE</div>
         <div class="nav-links">
             <button id="btn-my" class="active" onclick="showSection('my')">내 채널</button>
             <button id="btn-ref" onclick="showSection('ref')">레퍼런스</button>
@@ -50,138 +38,103 @@
 
     <main>
         <section id="my" class="section active">
-            <h2>조회수 추이</h2>
-            <div class="chart-container">
-                <canvas id="viewChart"></canvas>
-            </div>
-            <div id="my-stats-grid" class="grid"></div>
+            <h2>일일 조회수 추이</h2>
+            <div class="chart-container"><canvas id="viewChart"></canvas></div>
+            <div id="my-grid" class="grid"></div>
         </section>
 
         <section id="ref" class="section">
-            <h2>레퍼런스 분석</h2>
+            <h2>레퍼런스 채널 현황</h2>
             <div id="ref-grid" class="grid"></div>
         </section>
 
         <section id="settings" class="section">
-            <h2>채널 추가</h2>
-            <div class="card" style="max-width: 400px; margin: 0 auto;">
-                <div class="input-group">
-                    <label>채널 유형</label>
-                    <select id="chType">
-                        <option value="MY">내 채널</option>
-                        <option value="REF">레퍼런스</option>
-                    </select>
+            <div class="card" style="max-width: 500px; margin: 0 auto;">
+                <h3>채널 등록</h3>
+                <label>유형 선택</label>
+                <select id="chType" onchange="toggleInputMode()">
+                    <option value="REF">레퍼런스 (여러 개 가능)</option>
+                    <option value="MY">내 채널 (단일)</option>
+                </select>
+                
+                <div id="box-multi">
+                    <label>채널 핸들(@...) 또는 ID (한 줄에 하나씩)</label>
+                    <textarea id="chIds" rows="6" placeholder="@syukaworld&#10;@workman"></textarea>
                 </div>
-                <div class="input-group">
-                    <label>채널 ID</label>
-                    <input type="text" id="chId" placeholder="UC...">
-                </div>
-                <div class="input-group">
+                
+                <div id="box-single" style="display:none;">
                     <label>채널 이름 (별명)</label>
-                    <input type="text" id="chName" placeholder="예: 운동채널">
+                    <input type="text" id="chName" placeholder="예: 나의 일상 채널">
                 </div>
-                <button class="primary" onclick="addChannel()">채널 등록</button>
+                
+                <button class="primary" onclick="submitData()">등록하기</button>
             </div>
-            <h3 style="margin-top: 40px;">등록된 목록</h3>
-            <div id="settings-list"></div>
+            <div id="settings-list" style="margin-top:40px;"></div>
         </section>
     </main>
 
     <script>
-        // 사용자님의 실제 GAS URL이 적용되었습니다.
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxIPNXmu97zhIKEptoVo9i0LvqQjzdW4O2p2AqdR3qy4XbV9iv2wvvzbVZUVM5JbPSf/exec";
-
+        // 새로운 배포 URL로 교체되었습니다.
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyD_OrhDVfNcwrHkIaLktxEgNL70CIcio8F-01bOU24P0OdSUEZ8_0_vb5j3K2OdSCs/exec";
         let myChart = null;
 
-        async function fetchData() {
+        async function loadData() {
             try {
                 const res = await fetch(GAS_API_URL);
                 const data = await res.json();
-                renderMySection(data.myChannels);
-                renderRefSection(data.refChannels);
+                renderMy(data.myChannels);
+                renderRef(data.refChannels);
                 renderSettings(data.settings);
                 document.getElementById('loading').style.display = 'none';
-            } catch (e) {
+            } catch (e) { 
                 console.error(e);
-                alert("데이터 로드 실패. GAS 권한 설정을 확인하세요.");
+                alert("데이터 연결 실패. GAS 배포 설정을 확인하세요."); 
             }
         }
 
-        function renderMySection(data) {
-            if (!data || data.length <= 1) return;
-            const labels = [...new Set(data.slice(1).map(row => row[0]))];
-            const chNames = [...new Set(data.slice(1).map(row => row[1]))];
+        function renderMy(data) {
+            const container = document.getElementById('my-grid');
+            if(!data || data.length <= 1) return;
             
-            const datasets = chNames.map(name => {
-                return {
-                    label: name,
-                    data: labels.map(date => {
-                        const found = data.find(r => r[0] === date && r[1] === name);
-                        return found ? found[2] : 0;
-                    }),
-                    borderColor: '#' + Math.floor(Math.random()*16777215).toString(16),
-                    tension: 0.3
-                };
-            });
+            const labels = [...new Set(data.slice(1).map(r => r[0]))];
+            const chs = [...new Set(data.slice(1).map(r => r[1]))];
+            const datasets = chs.map(name => ({
+                label: name,
+                data: labels.map(d => {
+                    const found = data.find(r => r[0] === d && r[1] === name);
+                    return found ? found[2] : 0;
+                }),
+                borderColor: '#' + Math.floor(Math.random()*16777215).toString(16),
+                tension: 0.3
+            }));
 
-            if (myChart) myChart.destroy();
-            myChart = new Chart(document.getElementById('viewChart'), {
-                type: 'line',
-                data: { labels, datasets },
+            if(myChart) myChart.destroy();
+            myChart = new Chart(document.getElementById('viewChart'), { 
+                type:'line', 
+                data:{labels, datasets},
                 options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
             });
         }
 
-        function renderRefSection(data) {
+        function renderRef(data) {
             const container = document.getElementById('ref-grid');
-            if (!data || data.length <= 1) return container.innerHTML = "데이터가 없습니다.";
+            if(!data || data.length <= 1) return container.innerHTML = "데이터가 없습니다.";
             const lastDate = data[data.length-1][0];
             const latest = data.filter(r => r[0] === lastDate);
-
-            container.innerHTML = latest.map(row => `
+            container.innerHTML = latest.map(r => `
                 <div class="card">
-                    <img src="${row[11]}" alt="thumbnail">
-                    <div style="font-weight:700; font-size:1.1rem; margin-bottom:15px;">${row[1]}</div>
-                    <div class="stat-label">구독자수</div>
-                    <div class="stat-value">${Number(row[2]).toLocaleString()} (+${row[3]})</div>
-                    <div class="stat-label">총 조회수</div>
-                    <div class="stat-value">${Number(row[4]).toLocaleString()} (+${row[5]})</div>
+                    <img src="${r[11] || 'https://via.placeholder.com/50'}">
+                    <div style="font-weight:700;">${r[1]}</div>
+                    <div style="font-size:0.85rem; color:#666; margin-top:5px;">구독자: ${Number(r[2]).toLocaleString()}</div>
+                    <div style="font-size:0.85rem; color:#666;">총조회: ${Number(r[4]).toLocaleString()}</div>
                 </div>
             `).join('');
         }
 
-        function renderSettings(settings) {
-            const container = document.getElementById('settings-list');
-            if (!settings || settings.length <= 1) return;
-            container.innerHTML = '<ul>' + settings.slice(1).map(s => `<li>[${s[0] === 'MY' ? '내 채널' : '레퍼런스'}] ${s[2]} (${s[1]})</li>`).join('') + '</ul>';
-        }
-
-        async function addChannel() {
-            const chId = document.getElementById('chId').value;
-            const chName = document.getElementById('chName').value;
+        function toggleInputMode() {
             const type = document.getElementById('chType').value;
-            if(!chId || !chName) return alert("모든 항목을 입력하세요.");
-
-            const res = await fetch(GAS_API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ type, chId, chName })
-            });
-            const result = await res.json();
-            if(result.status === 'success') {
-                alert("등록 완료! 내일부터 데이터 수집이 시작됩니다.");
-                fetchData();
-            }
+            document.getElementById('box-single').style.display = type === 'MY' ? 'block' : 'none';
         }
 
-        function showSection(id) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            document.getElementById('btn-' + id).classList.add('active');
-        }
-
-        fetchData();
-        lucide.createIcons();
-    </script>
-</body>
-</html>
+        async function submitData() {
+            const type = document.getElementById('
