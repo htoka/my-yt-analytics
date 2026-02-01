@@ -121,7 +121,7 @@
             const lastDate = labels[labels.length - 1];
             const latestData = data.filter(r => r[0] === lastDate);
             const grid = document.getElementById('cat-grid');
-            grid.innerHTML = latestData.sort((a, b) => b[4] - a[4]).slice(0, 8).map(r => `
+            grid.innerHTML = latestData.sort((a, b) => b[4] - a[4]).map(r => `
                 <div class="card">
                     <div style="font-size:0.8rem; color:#666;">${r[2]}</div>
                     <div style="font-weight:700; font-size:1.1rem; margin-top:5px;">+${Number(r[4]).toLocaleString()}</div>
@@ -141,3 +141,4 @@
     </script>
 </body>
 </html>
+
