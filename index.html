@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YT Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --text: #000000;
+            --gray-light: #f5f5f5;
+            --gray-mid: #e0e0e0;
+            --gray-dark: #333333;
+            --accent: #000000;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; min-height: 100vh; }
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; border-bottom: 1px solid var(--gray-mid); position: sticky; top: 0; background: white; z-index: 100; }
+        .logo { font-size: 1.5rem; font-weight: 800; letter-spacing: -1px; }
+        .nav-links button { background: none; border: none; padding: 8px 16px; cursor: pointer; font-weight: 500; color: #666; transition: 0.2s; }
+        .nav-links button.active { color: var(--text); border-bottom: 2px solid var(--text); }
+        main { padding: 40px; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box; flex-grow: 1; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .chart-container { background: var(--gray-light); padding: 20px; border-radius: 12px; margin-bottom: 40px; border: 1px solid var(--gray-mid); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .card { border: 1px solid var(--gray-mid); border-radius: 12px; padding: 20px; transition: transform 0.2s; }
+        .card:hover { transform: translateY(-4px); }
+        .card img { width: 60px; height: 60px; border-radius: 50%; margin-bottom: 15px; border: 1px solid var(--gray-mid); }
+        .stat-label { font-size: 0.8rem; color: #666; margin-bottom: 4px; }
+        .stat-value { font-size: 1.2rem; font-weight: 700; margin-bottom: 12px; }
+        .input-group { margin-bottom: 15px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid var(--gray-mid); border-radius: 6px; margin-top: 5px; }
+        button.primary { background: var(--text); color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: 600; }
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; z-index: 1000; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <div id="loading">데이터 불러오는 중...</div>
+
+    <nav>
+        <div class="logo">DASHBOARD</div>
+        <div class="nav-links">
+            <button id="btn-my" class="active" onclick="showSection('my')">내 채널</button>
+            <button id="btn-ref" onclick="showSection('ref')">레퍼런스</button>
+            <button id="btn-settings" onclick="showSection('settings')">설정</button>
+        </div>
+    </nav>
+
+    <main>
+        <section id="my" class="section active">
+            <h2>조회수 추이</h2>
+            <div class="chart-container">
+                <canvas id="viewChart"></canvas>
+            </div>
+            <div id="my-stats-grid" class="grid"></div>
+        </section>
+
+        <section id="ref" class="section">
+            <h2>레퍼런스 분석</h2>
+            <div id="ref-grid" class="grid"></div>
+        </section>
+
+        <section id="settings" class="section">
+            <h2>채널 추가</h2>
+            <div class="card" style="max-width: 400px; margin: 0 auto;">
+                <div class="input-group">
+                    <label>채널 유형</label>
+                    <select id="chType">
+                        <option value="MY">내 채널</option>
+                        <option value="REF">레퍼런스</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>채널 ID</label>
+                    <input type="text" id="chId" placeholder="UC...">
+                </div>
+                <div class="input-group">
+                    <label>채널 이름 (별명)</label>
+                    <input type="text" id="chName" placeholder="예: 운동채널">
+                </div>
+                <button class="primary" onclick="addChannel()">채널 등록</button>
+            </div>
+            <h3 style="margin-top: 40px;">등록된 목록</h3>
+            <div id="settings-list"></div>
+        </section>
+    </main>
+
+    <script>
+        // 사용자님의 실제 GAS URL이 적용되었습니다.
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxIPNXmu97zhIKEptoVo9i0LvqQjzdW4O2p2AqdR3qy4XbV9iv2wvvzbVZUVM5JbPSf/exec";
+
+        let myChart = null;
+
+        async function fetchData() {
+            try {
+                const res = await fetch(GAS_API_URL);
+                const data = await res.json();
+                renderMySection(data.myChannels);
+                renderRefSection(data.refChannels);
+                renderSettings(data.settings);
+                document.getElementById('loading').style.display = 'none';
+            } catch (e) {
+                console.error(e);
+                alert("데이터 로드 실패. GAS 권한 설정을 확인하세요.");
+            }
+        }
+
+        function renderMySection(data) {
+            if (!data || data.length <= 1) return;
+            const labels = [...new Set(data.slice(1).map(row => row[0]))];
+            const chNames = [...new Set(data.slice(1).map(row => row[1]))];
+            
+            const datasets = chNames.map(name => {
+                return {
+                    label: name,
+                    data: labels.map(date => {
+                        const found = data.find(r => r[0] === date && r[1] === name);
+                        return found ? found[2] : 0;
+                    }),
+                    borderColor: '#' + Math.floor(Math.random()*16777215).toString(16),
+                    tension: 0.3
+                };
+            });
+
+            if (myChart) myChart.destroy();
+            myChart = new Chart(document.getElementById('viewChart'), {
+                type: 'line',
+                data: { labels, datasets },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
+        function renderRefSection(data) {
+            const container = document.getElementById('ref-grid');
+            if (!data || data.length <= 1) return container.innerHTML = "데이터가 없습니다.";
+            const lastDate = data[data.length-1][0];
+            const latest = data.filter(r => r[0] === lastDate);
+
+            container.innerHTML = latest.map(row => `
+                <div class="card">
+                    <img src="${row[11]}" alt="thumbnail">
+                    <div style="font-weight:700; font-size:1.1rem; margin-bottom:15px;">${row[1]}</div>
+                    <div class="stat-label">구독자수</div>
+                    <div class="stat-value">${Number(row[2]).toLocaleString()} (+${row[3]})</div>
+                    <div class="stat-label">총 조회수</div>
+                    <div class="stat-value">${Number(row[4]).toLocaleString()} (+${row[5]})</div>
+                </div>
+            `).join('');
+        }
+
+        function renderSettings(settings) {
+            const container = document.getElementById('settings-list');
+            if (!settings || settings.length <= 1) return;
+            container.innerHTML = '<ul>' + settings.slice(1).map(s => `<li>[${s[0] === 'MY' ? '내 채널' : '레퍼런스'}] ${s[2]} (${s[1]})</li>`).join('') + '</ul>';
+        }
+
+        async function addChannel() {
+            const chId = document.getElementById('chId').value;
+            const chName = document.getElementById('chName').value;
+            const type = document.getElementById('chType').value;
+            if(!chId || !chName) return alert("모든 항목을 입력하세요.");
+
+            const res = await fetch(GAS_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ type, chId, chName })
+            });
+            const result = await res.json();
+            if(result.status === 'success') {
+                alert("등록 완료! 내일부터 데이터 수집이 시작됩니다.");
+                fetchData();
+            }
+        }
+
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.getElementById('btn-' + id).classList.add('active');
+        }
+
+        fetchData();
+        lucide.createIcons();
+    </script>
+</body>
+</html>
