@@ -20,7 +20,7 @@
         .group-item.active { background: var(--accent); color: #fff; }
         .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
 
-        /* 메인 영역 스타일 */
+        /* 메인 콘텐츠 스타일 */
         #content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
         header { padding: 20px 40px; background: #fff; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
         .main-body { padding: 40px; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box; }
@@ -39,6 +39,9 @@
         #loading { position: fixed; inset: 0; background: #fff; z-index: 1000; display: flex; justify-content: center; align-items: center; font-weight: 700; }
         .channel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 20px; }
         .channel-card { background: #fff; border: 1px solid var(--border); padding: 15px; border-radius: 12px; font-size: 0.85rem; display: flex; flex-direction: column; justify-content: space-between; min-height: 100px; }
+        
+        /* 로그아웃 버튼용 */
+        .logout-link { font-size: 0.7rem; color: #999; text-decoration: underline; cursor: pointer; margin-top: 10px; display: block; text-align: center; }
     </style>
 </head>
 <body>
@@ -56,6 +59,7 @@
         </div>
         <div class="sidebar-footer">
             <button class="btn btn-outline" onclick="createNewGroup()">+ 새 분석 그룹 추가</button>
+            <span class="logout-link" onclick="logout()">로그아웃(비밀번호 재설정)</span>
         </div>
     </div>
 
@@ -90,29 +94,63 @@
         
         let userPw = "", channelList = [], rawStats = [], trendStats = [], currentMode = "all", chart;
 
+        // 1. 초기화 함수 수정 (자동 로그인 로직 추가)
         async function init() {
-            userPw = prompt("비밀번호를 입력하세요:");
-            if (userPw !== "qwer") { alert("접근 권한이 없습니다."); location.reload(); return; }
-            await fetchData();
-            document.getElementById('loading').style.display = 'none';
+            // 브라우저 로컬 저장소에서 비밀번호 확인
+            const savedPw = localStorage.getItem('hyochive_pw');
+            
+            if (savedPw) {
+                userPw = savedPw;
+                await checkAuthAndLoad();
+            } else {
+                promptPassword();
+            }
         }
 
-        async function fetchData() {
+        async function promptPassword() {
+            userPw = prompt("비밀번호를 입력하세요:");
+            if (userPw === "qwer") {
+                localStorage.setItem('hyochive_pw', userPw); // 비밀번호 저장
+                await checkAuthAndLoad();
+            } else {
+                alert("비밀번호가 틀렸습니다.");
+                location.reload();
+            }
+        }
+
+        async function checkAuthAndLoad() {
             try {
                 const res = await fetch(`${WORKER_URL}?pw=${userPw}`);
+                if (res.status === 401) {
+                    localStorage.removeItem('hyochive_pw');
+                    alert("비밀번호 인증에 실패했습니다.");
+                    location.reload();
+                    return;
+                }
                 const data = await res.json();
                 channelList = data.channels || [];
                 rawStats = data.stats || [];
                 trendStats = data.trends || [];
+                
                 updateSidebarGroups();
                 refreshContent();
-            } catch (e) { console.error(e); }
+                document.getElementById('loading').style.display = 'none';
+            } catch (e) {
+                alert("서버에 접속할 수 없습니다.");
+            }
         }
+
+        function logout() {
+            localStorage.removeItem('hyochive_pw');
+            location.reload();
+        }
+
+        // --- 기존 기능 로직 동일 ---
 
         function updateSidebarGroups() {
             const container = document.getElementById('customGroupList');
             container.innerHTML = "";
-            const groups = [...new Set(channelList.map(c => c.group_name))].filter(g => g && g !== 'null' && !g.startsWith('TEMP_'));
+            const groups = [...new Set(channelList.map(c => c.group_name))].filter(g => g && g !== 'null');
             groups.forEach(g => {
                 const div = document.createElement('div');
                 div.className = "group-item";
@@ -127,11 +165,9 @@
             currentMode = mode;
             document.querySelectorAll('.group-item').forEach(i => i.classList.remove('active'));
             el.classList.add('active');
-            
             document.getElementById('viewTitle').innerText = (mode === 'all') ? '전체 채널 분석' : (mode === 'market' ? '공식 카테고리 트렌드' : mode);
             document.getElementById('addBtn').style.display = (mode !== 'all' && mode !== 'market') ? 'block' : 'none';
             document.getElementById('listSection').style.display = (mode === 'market') ? 'none' : 'block';
-            
             refreshContent();
         }
 
@@ -208,7 +244,7 @@
         async function createNewGroup() {
             const name = prompt("새 그룹 이름을 입력하세요:");
             if (name) {
-                alert(`'${name}' 그룹이 생성되었습니다. 좌측 탭에서 선택 후 채널을 추가하세요.`);
+                alert(`'${name}' 그룹이 준비되었습니다. 좌측 탭에서 선택 후 채널을 추가하세요.`);
                 channelList.push({ channel_id: 'TEMP_'+Date.now(), channel_name: '첫 채널 추가 대기', group_name: name });
                 updateSidebarGroups();
             }
@@ -223,22 +259,18 @@
                     method: 'POST', body: JSON.stringify({ channelId: val, channelName: val, groupName: currentMode })
                 });
             }
-            // GAS 수집 트리거
             fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: 'MY' }) });
-            alert("등록 완료! 실제 채널명은 잠시 후 GAS 수집이 완료되면 자동으로 업데이트됩니다.");
+            alert("등록 완료! 실제 채널명은 잠시 후 자동으로 업데이트됩니다.");
             location.reload();
         }
 
         async function deleteChannel(id) {
-            if (!confirm("정말 이 채널을 삭제하시겠습니까?\n과거 통계 데이터도 함께 삭제됩니다.")) return;
+            if (!confirm("정말 이 채널을 삭제하시겠습니까?")) return;
             try {
                 const res = await fetch(`${WORKER_URL}/delete-channel?pw=${userPw}`, {
                     method: 'POST', body: JSON.stringify({ channelId: id })
                 });
-                if (res.ok) {
-                    alert("삭제되었습니다.");
-                    await fetchData();
-                }
+                if (res.ok) { location.reload(); }
             } catch (e) { alert("삭제 오류 발생"); }
         }
 
