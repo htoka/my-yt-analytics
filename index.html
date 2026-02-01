@@ -3,156 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HYOCHIVE Analytics</title>
+    <title>HYOCHIVE Analytics - Category Trends</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root { --bg: #ffffff; --text: #000000; --gray-light: #f5f5f5; --gray-mid: #e0e0e0; --accent: #000000; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; }
+        :root { --bg: #ffffff; --text: #000000; --gray-light: #f5f5f5; --gray-mid: #e0e0e0; }
+        body { font-family: -apple-system, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
         nav { display: flex; justify-content: space-between; padding: 20px 40px; border-bottom: 1px solid var(--gray-mid); position: sticky; top:0; background:white; z-index:10; }
-        .logo { font-size: 1.5rem; font-weight: 800; }
+        .logo { font-size: 1.5rem; font-weight: 800; cursor: pointer; }
         .nav-links button { background:none; border:none; padding: 10px 20px; cursor:pointer; font-weight:500; color:#666; }
         .nav-links button.active { color:var(--text); border-bottom:2px solid var(--text); }
         main { padding: 40px; max-width: 1200px; margin: 0 auto; }
         .section { display: none; }
         .section.active { display: block; }
-        .chart-container { background: var(--gray-light); padding: 20px; border-radius: 12px; margin-bottom: 40px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .card { border: 1px solid var(--gray-mid); border-radius: 12px; padding: 20px; }
-        .card img { width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px; }
-        textarea, input, select { width: 100%; padding: 12px; border: 1px solid var(--gray-mid); border-radius: 8px; margin: 10px 0; box-sizing: border-box; }
-        button.primary { background: var(--text); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 700; }
+        .chart-container { background: var(--gray-light); padding: 20px; border-radius: 12px; margin-bottom: 40px; min-height: 400px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .card { border: 1px solid var(--gray-mid); border-radius: 12px; padding: 15px; text-align: center; }
         #loading { position: fixed; inset: 0; background: white; display: flex; justify-content: center; align-items: center; z-index: 100; font-weight: 700; }
+        .info-text { font-size: 0.85rem; color: #666; margin-bottom: 20px; }
     </style>
 </head>
 <body>
     <div id="loading">데이터 로딩 중...</div>
     <nav>
-        <div class="logo">HYOCHIVE</div>
+        <div class="logo" onclick="location.reload()">HYOCHIVE</div>
         <div class="nav-links">
             <button id="btn-my" class="active" onclick="showSection('my')">내 채널</button>
-            <button id="btn-ref" onclick="showSection('ref')">레퍼런스</button>
-            <button id="btn-settings" onclick="showSection('settings')">설정</button>
+            <button id="btn-cat" onclick="showSection('cat')">카테고리 트렌드</button>
         </div>
     </nav>
 
     <main>
         <section id="my" class="section active">
-            <h2>일일 조회수 추이</h2>
-            <div class="chart-container"><canvas id="viewChart"></canvas></div>
-            <div id="my-grid" class="grid"></div>
+            <h2>내 채널 일일 조회수</h2>
+            <div class="chart-container"><canvas id="myChart"></canvas></div>
         </section>
 
-        <section id="ref" class="section">
-            <h2>레퍼런스 채널 현황</h2>
-            <div id="ref-grid" class="grid"></div>
-        </section>
-
-        <section id="settings" class="section">
-            <div class="card" style="max-width: 500px; margin: 0 auto;">
-                <h3>채널 등록</h3>
-                <label>유형 선택</label>
-                <select id="chType" onchange="toggleInputMode()">
-                    <option value="REF">레퍼런스 (여러 개 가능)</option>
-                    <option value="MY">내 채널 (단일)</option>
-                </select>
-                
-                <div id="box-multi">
-                    <label>채널 핸들(@...) 또는 ID (한 줄에 하나씩)</label>
-                    <textarea id="chIds" rows="6" placeholder="@syukaworld&#10;@workman"></textarea>
-                </div>
-                
-                <div id="box-single" style="display:none;">
-                    <label>채널 이름 (별명)</label>
-                    <input type="text" id="chName" placeholder="예: 나의 일상 채널">
-                </div>
-                
-                <button class="primary" onclick="submitData()">등록하기</button>
-            </div>
-            <div id="settings-list" style="margin-top:40px;"></div>
+        <section id="cat" class="section">
+            <h2>유튜브 카테고리별 일일 조회 증가 추이</h2>
+            <p class="info-text">* 한국(KR) 지역 인기 영상 50개의 조회수 합산 기준입니다. 하단 범례를 클릭하여 그래프를 끄고 켤 수 있습니다.</p>
+            <div class="chart-container"><canvas id="catChart"></canvas></div>
+            <div id="cat-grid" class="grid"></div>
         </section>
     </main>
 
     <script>
         // 요청하신 새로운 배포 URL이 적용되었습니다.
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxBqTiks4lJJGGDml46S9o46mcqIc4FvIJRM27pFPpuz36dTQsT48c_QQcoyio5oZnt/exec";
-        let myChart = null;
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx0T67vbwCyE3pa1V_jpDsxA_gYeR8mf5xhjS9nwWMEASiV7h4DBSHIGrtc8HiIVMaN/exec";
+        
+        let myChartObj = null;
+        let catChartObj = null;
 
-        async function loadData() {
+        async function init() {
             try {
                 const res = await fetch(GAS_API_URL);
                 const data = await res.json();
-                renderMy(data.myChannels);
-                renderRef(data.refChannels);
-                renderSettings(data.settings);
+                renderMyChart(data.myChannels);
+                renderCatChart(data.categoryTrends);
                 document.getElementById('loading').style.display = 'none';
-            } catch (e) { 
+            } catch (e) {
                 console.error(e);
-                alert("데이터 로딩 실패. GAS 배포 설정(모든 사용자 권한)을 확인하세요."); 
+                alert("데이터 로드 실패. GAS 배포 권한을 '모든 사용자'로 설정했는지 확인하세요.");
             }
         }
 
-        function renderMy(data) {
-            const container = document.getElementById('my-grid');
+        function renderMyChart(data) {
             if(!data || data.length <= 1) return;
-            
             const labels = [...new Set(data.slice(1).map(r => r[0]))];
-            const chs = [...new Set(data.slice(1).map(r => r[1]))];
-            const datasets = chs.map(name => ({
+            const channels = [...new Set(data.slice(1).map(r => r[1]))];
+            const datasets = channels.map(name => ({
                 label: name,
                 data: labels.map(d => {
-                    const found = data.find(r => r[0] === d && r[1] === name);
-                    return found ? found[2] : 0;
+                    const row = data.find(r => r[0] === d && r[1] === name);
+                    return row ? row[2] : 0;
                 }),
                 borderColor: '#' + Math.floor(Math.random()*16777215).toString(16),
-                tension: 0.3
+                tension: 0.3,
+                fill: false
             }));
-
-            if(myChart) myChart.destroy();
-            myChart = new Chart(document.getElementById('viewChart'), { 
-                type:'line', 
-                data:{labels, datasets},
-                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            if(myChartObj) myChartObj.destroy();
+            myChartObj = new Chart(document.getElementById('myChart'), { 
+                type: 'line', 
+                data: { labels, datasets },
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
-        function renderRef(data) {
-            const container = document.getElementById('ref-grid');
-            if(!data || data.length <= 1) return container.innerHTML = "데이터가 없습니다.";
-            const lastDate = data[data.length-1][0];
-            const latest = data.filter(r => r[0] === lastDate);
-            container.innerHTML = latest.map(r => `
+        function renderCatChart(data) {
+            if(!data || data.length <= 1) return;
+            const labels = [...new Set(data.slice(1).map(r => r[0]))];
+            const categories = [...new Set(data.slice(1).map(r => r[2]))];
+            
+            const datasets = categories.map(name => ({
+                label: name,
+                data: labels.map(d => {
+                    const row = data.find(r => r[0] === d && r[2] === name);
+                    return row ? row[4] : 0; // 일일_조회증가 데이터 사용
+                }),
+                borderColor: '#' + Math.floor(Math.random()*16777215).toString(16),
+                tension: 0.3,
+                hidden: true // 데이터가 많으므로 초기에는 숨김 (클릭해서 활성화)
+            }));
+
+            if(catChartObj) catChartObj.destroy();
+            catChartObj = new Chart(document.getElementById('catChart'), { 
+                type: 'line', 
+                data: { labels, datasets },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } 
+                    }
+                }
+            });
+
+            // 최신 증가량 카드 표시
+            const lastDate = labels[labels.length - 1];
+            const latestData = data.filter(r => r[0] === lastDate);
+            const grid = document.getElementById('cat-grid');
+            grid.innerHTML = latestData.sort((a, b) => b[4] - a[4]).slice(0, 8).map(r => `
                 <div class="card">
-                    <img src="${r[11] || 'https://via.placeholder.com/50'}" alt="thumbnail">
-                    <div style="font-weight:700;">${r[1]}</div>
-                    <div style="font-size:0.85rem; color:#666; margin-top:5px;">구독자: ${Number(r[2]).toLocaleString()}</div>
-                    <div style="font-size:0.85rem; color:#666;">총조회: ${Number(r[4]).toLocaleString()}</div>
+                    <div style="font-size:0.8rem; color:#666;">${r[2]}</div>
+                    <div style="font-weight:700; font-size:1.1rem; margin-top:5px;">+${Number(r[4]).toLocaleString()}</div>
+                    <div style="font-size:0.7rem; color:#999;">오늘 증가량</div>
                 </div>
             `).join('');
-        }
-
-        function toggleInputMode() {
-            const type = document.getElementById('chType').value;
-            document.getElementById('box-single').style.display = type === 'MY' ? 'block' : 'none';
-        }
-
-        async function submitData() {
-            const type = document.getElementById('chType').value;
-            const raw = document.getElementById('chIds').value.trim();
-            const chName = document.getElementById('chName').value;
-            if(!raw) return alert("내용을 입력하세요.");
-            
-            const chIds = raw.split('\n').map(s => s.trim()).filter(s => s !== "");
-            const payload = { type, chIds, chName: chName || "자동수집" };
-            
-            try {
-                const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify(payload) });
-                const result = await res.json();
-                if(result.status === 'success') {
-                    alert("등록되었습니다. 데이터 수집까지 시간이 걸릴 수 있습니다.");
-                    location.reload();
-                }
-            } catch (e) { alert("등록 실패"); }
         }
 
         function showSection(id) {
@@ -162,14 +137,7 @@
             document.getElementById('btn-' + id).classList.add('active');
         }
 
-        function renderSettings(data) {
-            const container = document.getElementById('settings-list');
-            if(!data || data.length <= 1) return;
-            container.innerHTML = "<h4>현재 등록된 채널 목록</h4><ul>" + data.slice(1).map(r => `<li>[${r[0]}] ${r[2]} (${r[1]})</li>`).join('') + "</ul>";
-        }
-
-        loadData();
-        lucide.createIcons();
+        init();
     </script>
 </body>
 </html>
