@@ -17,13 +17,16 @@
         .section.active { display: block; }
         
         .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-        .filter-group { display: flex; gap: 8px; align-items: center; }
-        select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--gray-mid); background: white; cursor: pointer; }
+        .filter-group { display: flex; gap: 15px; align-items: center; }
+        select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--gray-mid); background: white; cursor: pointer; font-size: 0.9rem; }
         
         .chart-container { background: var(--gray-light); padding: 20px; border-radius: 12px; margin-bottom: 40px; min-height: 450px; position: relative; }
         .btn-add { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
         .btn-add:hover { opacity: 0.8; }
         #loading { position: fixed; inset: 0; background: white; display: flex; justify-content: center; align-items: center; z-index: 100; font-weight: 700; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
+        .card { border: 1px solid var(--gray-mid); border-radius: 12px; padding: 15px; text-align: center; background: white; }
     </style>
 </head>
 <body>
@@ -35,7 +38,7 @@
             <button id="btn-my" class="active" onclick="showSection('my')">그룹별 분석</button>
             <button id="btn-cat" onclick="showSection('cat')">카테고리 트렌드</button>
         </div>
-        <button class="btn-add" onclick="addChannelWithGroup()">+ 채널 등록</button>
+        <button class="btn-add" onclick="addChannelWithGroup()">+ 채널 대량 등록</button>
     </nav>
 
     <main id="main-content">
@@ -43,17 +46,21 @@
             <div class="controls">
                 <h2>실시간 조회수 분석</h2>
                 <div class="filter-group">
-                    <label style="font-size:0.8rem; color:#666;">그룹:</label>
-                    <select id="groupSelect" onchange="renderMyChart()">
-                        <option value="all">전체 보기</option>
-                    </select>
-                    <label style="font-size:0.8rem; color:#666;">기간:</label>
-                    <select id="rangeSelect" onchange="renderMyChart()">
-                        <option value="7">최근 7일</option>
-                        <option value="30">최근 30일</option>
-                        <option value="90">최근 90일</option>
-                        <option value="365">전체</option>
-                    </select>
+                    <div>
+                        <label style="font-size:0.8rem; color:#666; display:block; margin-bottom:4px;">분석 그룹</label>
+                        <select id="groupSelect" onchange="renderMyChart()">
+                            <option value="all">전체 보기</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.8rem; color:#666; display:block; margin-bottom:4px;">분석 기간</label>
+                        <select id="rangeSelect" onchange="renderMyChart()">
+                            <option value="7">최근 7일</option>
+                            <option value="30">최근 30일</option>
+                            <option value="90">최근 90일</option>
+                            <option value="365">전체</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="chart-container"><canvas id="myChart"></canvas></div>
@@ -62,6 +69,7 @@
         <section id="cat" class="section">
             <h2>유튜브 카테고리별 일일 조회 증가</h2>
             <div class="chart-container"><canvas id="catChart"></canvas></div>
+            <div id="cat-grid" class="grid"></div>
         </section>
     </main>
 
@@ -72,39 +80,25 @@
         let userPw = "";
         let rawStats = [];
         let channelList = [];
-        let myChartObj;
+        let myChartObj, catChartObj;
 
         async function init() {
-            // 1. 비밀번호 입력 받기
             userPw = prompt("비밀번호를 입력하세요:");
-            if (!userPw) { location.reload(); return; }
-            
-            // 비밀번호 체크 (로컬에서 먼저 확인하여 불필요한 요청 방지)
-            if (userPw !== "qwer") { 
+            if (!userPw || userPw !== "qwer") { 
                 alert("접근 권한이 없습니다."); 
                 location.reload(); 
                 return; 
             }
 
             try {
-                // 2. Worker에서 데이터 가져오기 (비밀번호를 쿼리스트링으로 전달)
                 const res = await fetch(`${WORKER_URL}?pw=${encodeURIComponent(userPw)}`);
-                
-                if (res.status === 401) {
-                    alert("비밀번호가 서버 정보와 일치하지 않습니다.");
-                    location.reload();
-                    return;
-                }
-                
-                if (!res.ok) throw new Error("네트워크 응답 오류");
+                if (res.status === 401) { alert("비밀번호 불일치"); location.reload(); return; }
+                if (!res.ok) throw new Error("서버 응답 오류");
 
                 const data = await res.json();
-                
-                // 데이터 할당
                 rawStats = data.stats || [];
                 channelList = data.channels || [];
                 
-                // UI 업데이트
                 updateGroupDropdown();
                 
                 document.getElementById('loading').style.display = 'none';
@@ -115,17 +109,14 @@
                 if(data.trends) renderCatChart(data.trends);
                 
             } catch (e) {
-                console.error("Init Error:", e);
-                alert("서버 연결 실패. Cloudflare Worker가 정상 작동 중인지 확인하세요.");
-                document.getElementById('loading').innerText = "로드 실패 (콘솔 확인)";
+                console.error(e);
+                alert("데이터 로드 실패. Worker 설정을 확인하세요.");
             }
         }
 
         function updateGroupDropdown() {
             const select = document.getElementById('groupSelect');
-            // '전체 보기' 외의 옵션들 초기화
             select.innerHTML = '<option value="all">전체 보기</option>';
-            
             const groups = [...new Set(channelList.map(c => c.group_name || '기본'))];
             groups.forEach(g => {
                 const opt = document.createElement('option');
@@ -135,25 +126,13 @@
         }
 
         function renderMyChart() {
-            if(!rawStats || rawStats.length === 0) {
-                // 데이터가 없을 때 안내
-                const ctx = document.getElementById('myChart').getContext('2d');
-                ctx.font = "16px sans-serif";
-                ctx.textAlign = "center";
-                ctx.fillText("수집된 데이터가 아직 없습니다.", ctx.canvas.width/2, ctx.canvas.height/2);
-                return;
-            }
-
+            if(!rawStats.length) return;
             const days = parseInt(document.getElementById('rangeSelect').value);
             const selectedGroup = document.getElementById('groupSelect').value;
-            
             const cutoffDate = new Date();
             cutoffDate.setDate(cutoffDate.getDate() - days);
             
-            // 데이터 필터링 (기간)
             let filteredStats = rawStats.filter(r => new Date(r.date) >= cutoffDate);
-
-            // 데이터 필터링 (그룹)
             if (selectedGroup !== 'all') {
                 const targetIds = channelList.filter(c => c.group_name === selectedGroup).map(c => c.channel_id);
                 filteredStats = filteredStats.filter(r => targetIds.includes(r.channel_id));
@@ -166,7 +145,7 @@
                 const chInfo = channelList.find(c => c.channel_id === id);
                 const channelData = filteredStats.filter(r => r.channel_id === id);
                 return {
-                    label: chInfo ? `${chInfo.channel_name} (${chInfo.handle || '핸들없음'})` : id,
+                    label: chInfo ? `${chInfo.channel_name} (${chInfo.group_name})` : id,
                     data: labels.map(l => {
                         const found = channelData.find(r => r.date === l);
                         return found ? found.daily_views : 0;
@@ -182,49 +161,69 @@
                 type: 'line',
                 data: { labels, datasets },
                 options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } }
                 }
             });
         }
 
         async function addChannelWithGroup() {
-            const chId = prompt("채널 ID를 입력하세요 (예: UC...):");
-            const handle = prompt("채널 핸들명을 입력하세요 (예: @drama_shorts):");
-            const groupName = prompt("그룹명을 입력하세요 (예: 내채널, 경쟁사, 벤치마킹):", "기본");
-            
-            if (!chId || !groupName) return;
+            const rawInput = prompt("채널 ID들을 입력하세요. (콤마나 줄바꿈으로 구분 가능)");
+            if (!rawInput) return;
+            const groupName = prompt("그룹명을 입력하세요 (예: 경쟁사, 벤치마킹):", "기본");
+            if (!groupName) return;
 
-            try {
-                // 1. Worker DB 저장 (비밀번호 인증 포함)
+            const chIds = rawInput.split(/[\n,]+/).map(id => id.trim()).filter(id => id.startsWith('UC'));
+            if (!chIds.length) { alert("유효한 채널 ID(UC...)가 없습니다."); return; }
+
+            let count = 0;
+            for (const chId of chIds) {
                 const res = await fetch(`${WORKER_URL}/add-channel?pw=${encodeURIComponent(userPw)}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        channelId: chId, 
-                        channelName: handle || chId, 
-                        handle: handle || "", 
-                        groupName: groupName 
-                    })
+                    body: JSON.stringify({ channelId: chId, channelName: chId, handle: "", groupName: groupName })
                 });
-
-                if (res.ok) {
-                    // 2. GAS 수집 트리거
-                    fetch(GAS_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        body: JSON.stringify({ type: 'MY', chIds: [chId], chName: handle || chId })
-                    });
-
-                    alert("채널이 등록되었습니다. 잠시 후 데이터 수집이 시작됩니다.");
-                    location.reload();
-                } else {
-                    alert("등록 실패 (서버 오류)");
-                }
-            } catch (e) {
-                alert("등록 중 에러가 발생했습니다.");
+                if (res.ok) count++;
             }
+
+            if (count > 0) {
+                fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: 'MY', chIds: chIds }) });
+                alert(`${count}개의 채널이 등록되었습니다.`);
+                location.reload();
+            }
+        }
+
+        function renderCatChart(trends) {
+            if(!trends.length) return;
+            const labels = [...new Set(trends.map(r => r.date))].sort();
+            const categoryNames = [...new Set(trends.map(r => r.category_name))];
+
+            const datasets = categoryNames.map(name => ({
+                label: name,
+                data: labels.map(l => {
+                    const found = trends.find(r => r.date === l && r.category_name === name);
+                    return found ? found.daily_increase : 0;
+                }),
+                borderColor: '#' + Math.floor(Math.random()*16777215).toString(16),
+                tension: 0.3,
+                hidden: true
+            }));
+
+            if(catChartObj) catChartObj.destroy();
+            catChartObj = new Chart(document.getElementById('catChart'), {
+                type: 'line',
+                data: { labels, datasets },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            const lastDate = labels[labels.length - 1];
+            const latest = trends.filter(r => r.date === lastDate);
+            document.getElementById('cat-grid').innerHTML = latest.sort((a,b)=>b.daily_increase - a.daily_increase).slice(0, 10).map(r => `
+                <div class="card">
+                    <div style="font-size:0.8rem; color:#666;">${r.category_name}</div>
+                    <div style="font-weight:700; font-size:1.1rem;">+${Number(r.daily_increase).toLocaleString()}</div>
+                </div>
+            `).join('');
         }
 
         function showSection(id) {
@@ -232,11 +231,6 @@
             document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             document.getElementById('btn-' + id).classList.add('active');
-        }
-
-        function renderCatChart(trends) {
-            // 카테고리 차트 로직 (필요시 추가 구현)
-            console.log("Trend Data loaded:", trends);
         }
 
         init();
