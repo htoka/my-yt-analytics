@@ -3,234 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HYOCHIVE Analytics - Multi-Group Dashboard</title>
+    <title>HYOCHIVE Analytics - Admin Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --bg: #ffffff; --text: #000000; --gray-light: #f5f5f5; --gray-mid: #e0e0e0; --accent: #007aff; }
-        body { font-family: -apple-system, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
-        nav { display: flex; justify-content: space-between; padding: 20px 40px; border-bottom: 1px solid var(--gray-mid); position: sticky; top:0; background:white; z-index:10; }
-        .logo { font-size: 1.5rem; font-weight: 800; cursor: pointer; }
-        .nav-links button { background:none; border:none; padding: 10px 20px; cursor:pointer; font-weight:500; color:#666; }
-        .nav-links button.active { color:var(--text); border-bottom:2px solid var(--text); }
-        main { padding: 40px; max-width: 1200px; margin: 0 auto; display: none; }
-        .section { display: none; }
-        .section.active { display: block; }
+        :root { --sidebar-w: 260px; --accent: #007aff; --bg: #f8f9fa; --border: #e9ecef; --text: #1d1d1f; }
+        body { font-family: -apple-system, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); }
         
-        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-        .filter-group { display: flex; gap: 15px; align-items: center; }
-        select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--gray-mid); background: white; cursor: pointer; font-size: 0.9rem; }
+        /* 사이드바 */
+        #sidebar { width: var(--sidebar-w); background: #fff; border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-header { padding: 24px; border-bottom: 1px solid var(--border); }
+        .logo { font-size: 1.4rem; font-weight: 800; cursor: pointer; }
+        .group-list { flex: 1; overflow-y: auto; padding: 12px; }
+        .group-item { padding: 12px 16px; margin-bottom: 4px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: 500; display: flex; justify-content: space-between; }
+        .group-item:hover { background: #f0f0f0; }
+        .group-item.active { background: var(--accent); color: #fff; }
+        .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
+
+        /* 메인 영역 */
+        #content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        header { padding: 20px 40px; background: #fff; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+        .main-body { padding: 40px; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box; }
         
-        .chart-container { background: var(--gray-light); padding: 20px; border-radius: 12px; margin-bottom: 40px; min-height: 450px; position: relative; }
-        .btn-add { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .btn-add:hover { opacity: 0.8; }
-        #loading { position: fixed; inset: 0; background: white; display: flex; justify-content: center; align-items: center; z-index: 100; font-weight: 700; }
+        .card { background: #fff; border-radius: 16px; border: 1px solid var(--border); padding: 24px; margin-bottom: 24px; }
+        .chart-wrapper { height: 450px; }
+        .controls { display: flex; gap: 10px; }
+        select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: #fff; }
         
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
-        .card { border: 1px solid var(--gray-mid); border-radius: 12px; padding: 15px; text-align: center; background: white; }
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-outline { background: #fff; border: 1px solid var(--border); }
+        
+        #loading { position: fixed; inset: 0; background: #fff; z-index: 1000; display: flex; justify-content: center; align-items: center; font-weight: 700; }
+        .channel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 20px; }
+        .channel-card { background: #fff; border: 1px solid var(--border); padding: 15px; border-radius: 12px; font-size: 0.85rem; }
     </style>
 </head>
 <body>
-    <div id="loading">데이터를 불러오는 중...</div>
+    <div id="loading">데이터 로딩 중...</div>
 
-    <nav id="navbar" style="display:none;">
-        <div class="logo" onclick="location.reload()">HYOCHIVE</div>
-        <div class="nav-links">
-            <button id="btn-my" class="active" onclick="showSection('my')">그룹별 분석</button>
-            <button id="btn-cat" onclick="showSection('cat')">카테고리 트렌드</button>
+    <div id="sidebar">
+        <div class="sidebar-header"><div class="logo">HYOCHIVE</div></div>
+        <div class="group-list" id="groupList">
+            <div class="group-item active" onclick="selectGroup('all', this)">전체 보기</div>
         </div>
-        <button class="btn-add" onclick="addChannelWithGroup()">+ 채널 대량 등록</button>
-    </nav>
+        <div class="sidebar-footer">
+            <button class="btn btn-outline" style="width:100%" onclick="createNewGroup()">+ 새 그룹 만들기</button>
+        </div>
+    </div>
 
-    <main id="main-content">
-        <section id="my" class="section active">
+    <div id="content">
+        <header>
+            <h2 id="currentGroupName">전체 보기</h2>
             <div class="controls">
-                <h2>실시간 조회수 분석</h2>
-                <div class="filter-group">
-                    <div>
-                        <label style="font-size:0.8rem; color:#666; display:block; margin-bottom:4px;">분석 그룹</label>
-                        <select id="groupSelect" onchange="renderMyChart()">
-                            <option value="all">전체 보기</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size:0.8rem; color:#666; display:block; margin-bottom:4px;">분석 기간</label>
-                        <select id="rangeSelect" onchange="renderMyChart()">
-                            <option value="7">최근 7일</option>
-                            <option value="30">최근 30일</option>
-                            <option value="90">최근 90일</option>
-                            <option value="365">전체</option>
-                        </select>
-                    </div>
-                </div>
+                <select id="rangeSelect" onchange="renderChart()">
+                    <option value="7">최근 7일</option>
+                    <option value="30">최근 30일</option>
+                    <option value="365">전체</option>
+                </select>
+                <button class="btn btn-primary" id="addBtn" style="display:none;" onclick="addChannels()">+ 채널 추가</button>
             </div>
-            <div class="chart-container"><canvas id="myChart"></canvas></div>
-        </section>
+        </header>
 
-        <section id="cat" class="section">
-            <h2>유튜브 카테고리별 일일 조회 증가</h2>
-            <div class="chart-container"><canvas id="catChart"></canvas></div>
-            <div id="cat-grid" class="grid"></div>
-        </section>
-    </main>
+        <div class="main-body">
+            <div class="card"><div class="chart-wrapper"><canvas id="mainChart"></canvas></div></div>
+            <h3>소속 채널</h3>
+            <div id="channelGrid" class="channel-grid"></div>
+        </div>
+    </div>
 
     <script>
         const WORKER_URL = "https://yt-analytics-worker.dustmdwjd.workers.dev";
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbwifbTGGHN_OY_MJk0HBC6Zh_4NCffrVlnqwQ6qvp9vqKcsk6KEYigcY9xN3WKEmE4x/exec";
+        // 새 GAS URL 적용 완료
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbw86dRPflnolRZIyud38ZDdAzgZj-4fJUCECowoCkZ3gxcm9kmJ0fq48-nP08eVT4b1/exec";
         
-        let userPw = "";
-        let rawStats = [];
-        let channelList = [];
-        let myChartObj, catChartObj;
+        let userPw = "", rawStats = [], channelList = [], currentGroup = "all", mainChart;
 
         async function init() {
-            userPw = prompt("비밀번호를 입력하세요:");
-            if (!userPw || userPw !== "qwer") { 
-                alert("접근 권한이 없습니다."); 
-                location.reload(); 
-                return; 
-            }
-
+            userPw = prompt("비밀번호:");
+            if (userPw !== "qwer") { location.reload(); return; }
             try {
-                const res = await fetch(`${WORKER_URL}?pw=${encodeURIComponent(userPw)}`);
-                if (res.status === 401) { alert("비밀번호 불일치"); location.reload(); return; }
-                if (!res.ok) throw new Error("서버 응답 오류");
-
+                const res = await fetch(`${WORKER_URL}?pw=${userPw}`);
                 const data = await res.json();
                 rawStats = data.stats || [];
                 channelList = data.channels || [];
                 
-                updateGroupDropdown();
-                
+                refreshSidebar();
+                renderChart();
+                updateChannelGrid();
                 document.getElementById('loading').style.display = 'none';
-                document.getElementById('navbar').style.display = 'flex';
-                document.getElementById('main-content').style.display = 'block';
-
-                renderMyChart();
-                if(data.trends) renderCatChart(data.trends);
-                
-            } catch (e) {
-                console.error(e);
-                alert("데이터 로드 실패. Worker 설정을 확인하세요.");
-            }
+            } catch (e) { alert("연결 실패"); }
         }
 
-        function updateGroupDropdown() {
-            const select = document.getElementById('groupSelect');
-            select.innerHTML = '<option value="all">전체 보기</option>';
-            const groups = [...new Set(channelList.map(c => c.group_name || '기본'))];
+        function refreshSidebar() {
+            const list = document.getElementById('groupList');
+            list.innerHTML = `<div class="group-item ${currentGroup === 'all' ? 'active' : ''}" onclick="selectGroup('all', this)">전체 보기</div>`;
+            const groups = [...new Set(channelList.map(c => c.group_name))].filter(g => g);
             groups.forEach(g => {
-                const opt = document.createElement('option');
-                opt.value = g; opt.textContent = g;
-                select.appendChild(opt);
+                list.innerHTML += `<div class="group-item ${currentGroup === g ? 'active' : ''}" onclick="selectGroup('${g}', this)">${g}</div>`;
             });
         }
 
-        function renderMyChart() {
-            if(!rawStats.length) return;
-            const days = parseInt(document.getElementById('rangeSelect').value);
-            const selectedGroup = document.getElementById('groupSelect').value;
-            const cutoffDate = new Date();
-            cutoffDate.setDate(cutoffDate.getDate() - days);
+        function selectGroup(name, el) {
+            currentGroup = name;
+            document.querySelectorAll('.group-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('currentGroupName').innerText = name === 'all' ? '전체 보기' : name;
+            document.getElementById('addBtn').style.display = name === 'all' ? 'none' : 'block';
+            renderChart();
+            updateChannelGrid();
+        }
+
+        function createNewGroup() {
+            const name = prompt("새 그룹 이름을 입력하세요:");
+            if (!name) return;
+            // 빈 채널로 그룹 생성 알림
+            alert(`'${name}' 그룹이 생성되었습니다. 이제 채널을 추가해 주세요.`);
+            channelList.push({ channel_id: 'TEMP', channel_name: '첫 채널을 추가하세요', group_name: name });
+            refreshSidebar();
+        }
+
+        async function addChannels() {
+            const input = prompt("채널 ID(UC...) 또는 핸들(@...)을 입력하세요 (여러 개는 콤마 구분)");
+            if (!input) return;
+            const items = input.split(',').map(s => s.trim());
             
-            let filteredStats = rawStats.filter(r => new Date(r.date) >= cutoffDate);
-            if (selectedGroup !== 'all') {
-                const targetIds = channelList.filter(c => c.group_name === selectedGroup).map(c => c.channel_id);
-                filteredStats = filteredStats.filter(r => targetIds.includes(r.channel_id));
+            for (const val of items) {
+                await fetch(`${WORKER_URL}/add-channel?pw=${userPw}`, {
+                    method: 'POST',
+                    body: JSON.stringify({ channelId: val, channelName: val, groupName: currentGroup })
+                });
+            }
+            // GAS 트리거
+            fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: 'MY', chIds: items }) });
+            alert("등록되었습니다. 잠시 후 GAS 수집이 완료되면 실제 채널명으로 업데이트됩니다.");
+            location.reload();
+        }
+
+        function renderChart() {
+            if (!rawStats.length) return;
+            const days = parseInt(document.getElementById('rangeSelect').value);
+            const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
+            let filtered = rawStats.filter(r => new Date(r.date) >= cutoff);
+
+            if (currentGroup !== 'all') {
+                const ids = channelList.filter(c => c.group_name === currentGroup).map(c => c.channel_id);
+                filtered = filtered.filter(r => ids.includes(r.channel_id));
             }
 
-            const labels = [...new Set(filteredStats.map(r => r.date))].sort();
-            const channelIds = [...new Set(filteredStats.map(r => r.channel_id))];
-
-            const datasets = channelIds.map(id => {
-                const chInfo = channelList.find(c => c.channel_id === id);
-                const channelData = filteredStats.filter(r => r.channel_id === id);
+            const labels = [...new Set(filtered.map(r => r.date))].sort();
+            const datasets = [...new Set(filtered.map(r => r.channel_id))].map(id => {
+                const ch = channelList.find(c => c.channel_id === id);
                 return {
-                    label: chInfo ? `${chInfo.channel_name} (${chInfo.group_name})` : id,
+                    label: ch ? ch.channel_name : id,
                     data: labels.map(l => {
-                        const found = channelData.find(r => r.date === l);
+                        const found = filtered.find(r => r.date === l && r.channel_id === id);
                         return found ? found.daily_views : 0;
                     }),
                     borderColor: '#' + Math.floor(Math.random()*16777215).toString(16),
-                    tension: 0.3,
-                    fill: false
+                    tension: 0.3
                 };
             });
 
-            if(myChartObj) myChartObj.destroy();
-            myChartObj = new Chart(document.getElementById('myChart'), {
-                type: 'line',
-                data: { labels, datasets },
-                options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } }
-                }
-            });
-        }
-
-        async function addChannelWithGroup() {
-            const rawInput = prompt("채널 ID들을 입력하세요. (콤마나 줄바꿈으로 구분 가능)");
-            if (!rawInput) return;
-            const groupName = prompt("그룹명을 입력하세요 (예: 경쟁사, 벤치마킹):", "기본");
-            if (!groupName) return;
-
-            const chIds = rawInput.split(/[\n,]+/).map(id => id.trim()).filter(id => id.startsWith('UC'));
-            if (!chIds.length) { alert("유효한 채널 ID(UC...)가 없습니다."); return; }
-
-            let count = 0;
-            for (const chId of chIds) {
-                const res = await fetch(`${WORKER_URL}/add-channel?pw=${encodeURIComponent(userPw)}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ channelId: chId, channelName: chId, handle: "", groupName: groupName })
-                });
-                if (res.ok) count++;
-            }
-
-            if (count > 0) {
-                fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: 'MY', chIds: chIds }) });
-                alert(`${count}개의 채널이 등록되었습니다.`);
-                location.reload();
-            }
-        }
-
-        function renderCatChart(trends) {
-            if(!trends.length) return;
-            const labels = [...new Set(trends.map(r => r.date))].sort();
-            const categoryNames = [...new Set(trends.map(r => r.category_name))];
-
-            const datasets = categoryNames.map(name => ({
-                label: name,
-                data: labels.map(l => {
-                    const found = trends.find(r => r.date === l && r.category_name === name);
-                    return found ? found.daily_increase : 0;
-                }),
-                borderColor: '#' + Math.floor(Math.random()*16777215).toString(16),
-                tension: 0.3,
-                hidden: true
-            }));
-
-            if(catChartObj) catChartObj.destroy();
-            catChartObj = new Chart(document.getElementById('catChart'), {
-                type: 'line',
-                data: { labels, datasets },
+            if (mainChart) mainChart.destroy();
+            mainChart = new Chart(document.getElementById('mainChart'), {
+                type: 'line', data: { labels, datasets },
                 options: { responsive: true, maintainAspectRatio: false }
             });
-
-            const lastDate = labels[labels.length - 1];
-            const latest = trends.filter(r => r.date === lastDate);
-            document.getElementById('cat-grid').innerHTML = latest.sort((a,b)=>b.daily_increase - a.daily_increase).slice(0, 10).map(r => `
-                <div class="card">
-                    <div style="font-size:0.8rem; color:#666;">${r.category_name}</div>
-                    <div style="font-weight:700; font-size:1.1rem;">+${Number(r.daily_increase).toLocaleString()}</div>
-                </div>
-            `).join('');
         }
 
-        function showSection(id) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            document.getElementById('btn-' + id).classList.add('active');
+        function updateChannelGrid() {
+            const grid = document.getElementById('channelGrid');
+            const target = currentGroup === 'all' ? channelList : channelList.filter(c => c.group_name === currentGroup);
+            grid.innerHTML = target.map(c => `
+                <div class="channel-card">
+                    <strong>${c.channel_name || '수집 대기'}</strong><br>
+                    <span style="color:#888; font-size:0.75rem;">${c.channel_id}</span>
+                </div>
+            `).join('');
         }
 
         init();
