@@ -7,12 +7,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --sidebar-w: 260px; --accent: #007aff; --bg: #f8f9fa; --border: #e9ecef; --text: #1d1d1f; --danger: #ff3b30; }
-        body { font-family: -apple-system, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); overflow: hidden; }
         
-        /* 사이드바 */
+        /* 사이드바 스타일 복구 */
         #sidebar { width: var(--sidebar-w); background: #fff; border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-header { padding: 24px; border-bottom: 1px solid var(--border); }
-        .logo { font-size: 1.4rem; font-weight: 800; cursor: pointer; }
+        .logo { font-size: 1.4rem; font-weight: 800; cursor: pointer; color: var(--text); }
         .group-list { flex: 1; overflow-y: auto; padding: 12px; }
         .menu-label { font-size: 0.75rem; color: #888; padding: 10px 16px; text-transform: uppercase; letter-spacing: 1px; }
         .group-item { padding: 12px 16px; margin-bottom: 4px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: 500; font-size: 0.95rem; display: flex; align-items: center; }
@@ -20,35 +20,34 @@
         .group-item.active { background: var(--accent); color: #fff; }
         .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
 
-        /* 메인 영역 */
+        /* 메인 영역 레이아웃 복구 */
         #content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
         header { padding: 20px 40px; background: #fff; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
-        .main-body { padding: 40px; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+        .main-body { padding: 40px; max-width: 1400px; margin: 0 auto; width: 100%; box-sizing: border-box; }
         
         .card { background: #fff; border-radius: 16px; border: 1px solid var(--border); padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-        .chart-wrapper { height: 450px; position: relative; }
+        .chart-wrapper { height: 400px; position: relative; }
         .controls { display: flex; gap: 10px; }
         select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: #fff; outline: none; }
         
-        /* 테이블 스타일 */
-        .table-wrapper { overflow-x: auto; margin-top: 20px; border-radius: 12px; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; background: #fff; font-size: 0.9rem; }
-        th { background: #fcfcfc; padding: 12px; text-align: left; border-bottom: 2px solid var(--border); font-weight: 600; }
-        td { padding: 12px; border-bottom: 1px solid var(--border); }
-        .sum-row { background: #f0f8ff !important; font-weight: bold; color: var(--accent); } /* 월 합계 강조 */
-        tr:last-child td { border-bottom: none; }
+        /* 테이블 스타일 복구 및 월 합계 강조 */
+        .table-wrapper { overflow-x: auto; margin-top: 20px; border-radius: 12px; border: 1px solid var(--border); background: #fff; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th { background: #fcfcfc; padding: 14px; text-align: left; border-bottom: 2px solid var(--border); font-weight: 600; white-space: nowrap; }
+        td { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+        .sum-row { background: #f0f8ff !important; font-weight: bold; color: var(--accent); } /* 월 합계 파란색 강조 */
         tr:hover { background: #f8f9ff; }
         .increase-tag { color: var(--accent); font-weight: 700; }
 
-        .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
+        /* 버튼 및 기타 요소 */
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .btn-primary { background: var(--accent); color: #fff; }
-        .btn-outline { background: #fff; border: 1px solid var(--border); width: 100%; }
-        .btn-danger { background: none; color: var(--danger); border: 1px solid var(--danger); padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; margin-top: 8px; align-self: flex-start; }
-        .btn-danger:hover { background: var(--danger); color: #fff; }
+        .btn-outline { background: #fff; border: 1px solid var(--border); width: 100%; text-align: center; }
+        .btn-danger { background: none; color: var(--danger); border: 1px solid var(--danger); padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; }
         
         #loading { position: fixed; inset: 0; background: #fff; z-index: 1000; display: flex; justify-content: center; align-items: center; font-weight: 700; }
-        .channel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 20px; }
-        .channel-card { background: #fff; border: 1px solid var(--border); padding: 15px; border-radius: 12px; font-size: 0.85rem; display: flex; flex-direction: column; justify-content: space-between; min-height: 100px; }
+        .channel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; margin-top: 20px; }
+        .channel-card { background: #fff; border: 1px solid var(--border); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; }
         .logout-link { font-size: 0.7rem; color: #999; text-decoration: underline; cursor: pointer; margin-top: 10px; display: block; text-align: center; }
     </style>
 </head>
@@ -66,7 +65,7 @@
         </div>
         <div class="sidebar-footer">
             <button class="btn btn-outline" onclick="createNewGroup()">+ 새 분석 그룹 추가</button>
-            <span class="logout-link" onclick="logout()">로그아웃(비밀번호 재설정)</span>
+            <span class="logout-link" onclick="logout()">로그아웃</span>
         </div>
     </div>
 
@@ -120,13 +119,13 @@
         async function promptPassword() {
             userPw = prompt("비밀번호를 입력하세요:");
             if (userPw === "qwer") { localStorage.setItem('hyochive_pw', userPw); await checkAuthAndLoad(); } 
-            else { alert("비밀번호가 틀렸습니다."); location.reload(); }
+            else { alert("비밀번호 오류"); location.reload(); }
         }
 
         async function checkAuthAndLoad() {
             try {
                 const res = await fetch(`${WORKER_URL}?pw=${userPw}`);
-                if (res.status === 401) { localStorage.removeItem('hyochive_pw'); location.reload(); return; }
+                if (res.status === 401) { logout(); return; }
                 const data = await res.json();
                 channelList = data.channels || [];
                 rawStats = data.stats || [];
@@ -134,7 +133,7 @@
                 updateSidebarGroups();
                 refreshContent();
                 document.getElementById('loading').style.display = 'none';
-            } catch (e) { alert("연결 실패"); }
+            } catch (e) { alert("서버 연결 실패"); }
         }
 
         function refreshContent() {
@@ -153,24 +152,26 @@
                 filtered = filtered.filter(r => targetIds.includes(r.channel_id));
             }
 
-            const labels = [...new Set(filtered.map(r => r.date))].sort().reverse(); 
+            const dates = [...new Set(filtered.map(r => r.date))].sort().reverse(); 
             const channelIds = [...new Set(filtered.map(r => r.channel_id))];
 
-            const chartLabels = [...labels].reverse();
-            const datasets = channelIds.map(id => {
+            // 차트 데이터 (시간순)
+            const chartLabels = [...dates].reverse();
+            const datasets = channelIds.map((id, i) => {
                 const ch = channelList.find(c => c.channel_id === id);
                 return {
-                    label: ch && ch.channel_name ? ch.channel_name : id,
+                    label: ch ? ch.channel_name : id,
                     data: chartLabels.map(l => {
                         const found = filtered.find(r => r.date === l && r.channel_id === id);
                         return found ? found.daily_views : 0;
                     }),
-                    borderColor: `hsl(${(channelIds.indexOf(id) * 137) % 360}, 70%, 50%)`,
-                    tension: 0.3
+                    borderColor: `hsl(${(i * 137) % 360}, 70%, 50%)`,
+                    backgroundColor: `hsla(${(i * 137) % 360}, 70%, 50%, 0.1)`,
+                    tension: 0.3, fill: false
                 };
             });
             drawChart(chartLabels, datasets);
-            buildTable(labels, channelIds, filtered, 'channel');
+            buildTable(dates, channelIds, filtered, 'channel');
         }
 
         function renderMarketView() {
@@ -178,26 +179,27 @@
             const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
             let filtered = trendStats.filter(r => new Date(r.date) >= cutoff);
 
-            const labels = [...new Set(filtered.map(r => r.date))].sort().reverse();
-            const categoryNames = [...new Set(filtered.map(r => r.category_name))];
+            const dates = [...new Set(filtered.map(r => r.date))].sort().reverse();
+            const categories = [...new Set(filtered.map(r => r.category_name))];
 
-            const chartLabels = [...labels].reverse();
-            const datasets = categoryNames.map(name => ({
+            const chartLabels = [...dates].reverse();
+            const datasets = categories.map((name, i) => ({
                 label: name,
                 data: chartLabels.map(l => {
                     const found = filtered.find(r => r.date === l && r.category_name === name);
                     return found ? found.daily_increase : 0;
                 }),
-                borderColor: `hsl(${(categoryNames.indexOf(name) * 137) % 360}, 70%, 50%)`,
+                borderColor: `hsl(${(i * 137) % 360}, 70%, 50%)`,
                 tension: 0.3
             }));
             drawChart(chartLabels, datasets);
-            buildTable(labels, categoryNames, filtered, 'market');
+            buildTable(dates, categories, filtered, 'market');
         }
 
         function buildTable(dates, items, data, type) {
             const header = document.getElementById('tableHeader');
             const body = document.getElementById('tableBody');
+            
             header.innerHTML = `<th>일자</th>` + items.map(id => {
                 const name = type === 'channel' ? (channelList.find(c => c.channel_id === id)?.channel_name || id) : id;
                 return `<th>${name}</th>`;
@@ -207,10 +209,10 @@
             let monthlySums = {};
             let currentMonth = "";
 
-            dates.forEach((date, index) => {
-                const month = date.substring(0, 7); // YYYY-MM
+            dates.forEach((date, idx) => {
+                const month = date.substring(0, 7);
                 
-                // 월이 바뀌면 이전 월의 합계를 먼저 출력 (최신순이므로 월의 상단에 합계가 위치)
+                // 월 합계 행 추가 (최신순이므로 월 상단에 배치)
                 if (currentMonth !== "" && currentMonth !== month) {
                     html += renderSumRow(currentMonth, items, monthlySums[currentMonth]);
                 }
@@ -227,29 +229,26 @@
                 });
                 html += `<tr>${rowHtml}</tr>`;
 
-                // 마지막 루프에서 마지막 월 합계 출력
-                if (index === dates.length - 1) {
+                if (idx === dates.length - 1) {
                     html += renderSumRow(month, items, monthlySums[month]);
                 }
             });
-
             body.innerHTML = html;
         }
 
         function renderSumRow(month, items, sums) {
-            let rowHtml = `<td class="sum-row"><strong>${month} 합계</strong></td>`;
+            let row = `<td class="sum-row"><strong>${month} 합계</strong></td>`;
             items.forEach(item => {
-                const total = sums[item] || 0;
-                rowHtml += `<td class="sum-row"><strong>+${total.toLocaleString()}</strong></td>`;
+                row += `<td class="sum-row"><strong>+${(sums[item] || 0).toLocaleString()}</strong></td>`;
             });
-            return `<tr class="sum-row">${rowHtml}</tr>`;
+            return `<tr class="sum-row">${row}</tr>`;
         }
 
         function drawChart(labels, datasets) {
             if (chart) chart.destroy();
             chart = new Chart(document.getElementById('mainChart'), {
                 type: 'line', data: { labels, datasets },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }, scales: { y: { beginAtZero: true } } }
             });
         }
 
@@ -258,7 +257,7 @@
             const target = currentMode === 'all' ? channelList : channelList.filter(c => c.group_name === currentMode);
             grid.innerHTML = target.map(c => `
                 <div class="channel-card">
-                    <div><strong>${c.channel_name || '수집대기'}</strong><br><small>${c.channel_id}</small></div>
+                    <div><strong>${c.channel_name || '수집대기'}</strong><br><small style="color:#888">${c.channel_id}</small></div>
                     <button class="btn-danger" onclick="deleteChannel('${c.channel_id}')">삭제</button>
                 </div>
             `).join('');
@@ -289,7 +288,7 @@
         }
 
         async function addChannelsToGroup() {
-            const input = prompt("ID 또는 핸들(@) 입력 (콤마 구분)");
+            const input = prompt("채널 ID 또는 핸들(@) 입력 (쉼표 구분)");
             if (!input) return;
             const items = input.split(',').map(s => s.trim());
             for (const val of items) {
@@ -302,13 +301,14 @@
         }
 
         async function deleteChannel(id) {
-            if (!confirm("삭제하시겠습니까?")) return;
-            await fetch(`${WORKER_URL}/delete-channel?pw=${userPw}`, { method: 'POST', body: JSON.stringify({ channelId: id }) });
-            location.reload();
+            if (confirm("삭제하시겠습니까?")) {
+                await fetch(`${WORKER_URL}/delete-channel?pw=${userPw}`, { method: 'POST', body: JSON.stringify({ channelId: id }) });
+                location.reload();
+            }
         }
 
         function createNewGroup() {
-            const name = prompt("새 그룹 이름:");
+            const name = prompt("새 분석 그룹 이름:");
             if (name) {
                 channelList.push({ channel_id: 'TEMP_'+Date.now(), channel_name: '첫 채널 추가 대기', group_name: name });
                 updateSidebarGroups();
@@ -316,7 +316,6 @@
         }
 
         function logout() { localStorage.removeItem('hyochive_pw'); location.reload(); }
-
         init();
     </script>
 </body>
