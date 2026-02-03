@@ -1,291 +1,323 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HYOCHIVE Analytics - Professional Pro</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root { --sidebar-w: 260px; --accent: #007aff; --bg: #f8f9fa; --border: #e9ecef; --text: #1d1d1f; --danger: #ff3b30; }
-        body { font-family: -apple-system, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); }
-        
-        /* 사이드바 */
-        #sidebar { width: var(--sidebar-w); background: #fff; border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
-        .sidebar-header { padding: 24px; border-bottom: 1px solid var(--border); }
-        .logo { font-size: 1.4rem; font-weight: 800; cursor: pointer; }
-        .group-list { flex: 1; overflow-y: auto; padding: 12px; }
-        .menu-label { font-size: 0.75rem; color: #888; padding: 10px 16px; text-transform: uppercase; letter-spacing: 1px; }
-        .group-item { padding: 12px 16px; margin-bottom: 4px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: 500; font-size: 0.95rem; display: flex; align-items: center; }
-        .group-item:hover { background: #f0f0f0; }
-        .group-item.active { background: var(--accent); color: #fff; }
-        .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HYOCHIVE Analytics - Professional Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --sidebar-w: 260px; --accent: #007aff; --bg: #f8f9fa; --border: #e9ecef; --text: #1d1d1f; --danger: #ff3b30; }
+        body { font-family: -apple-system, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); }
+        
+        /* 사이드바 */
+        #sidebar { width: var(--sidebar-w); background: #fff; border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-header { padding: 24px; border-bottom: 1px solid var(--border); }
+        .logo { font-size: 1.4rem; font-weight: 800; cursor: pointer; }
+        .group-list { flex: 1; overflow-y: auto; padding: 12px; }
+        .menu-label { font-size: 0.75rem; color: #888; padding: 10px 16px; text-transform: uppercase; letter-spacing: 1px; }
+        .group-item { padding: 12px 16px; margin-bottom: 4px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: 500; font-size: 0.95rem; display: flex; align-items: center; }
+        .group-item:hover { background: #f0f0f0; }
+        .group-item.active { background: var(--accent); color: #fff; }
+        .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
 
-        /* 메인 영역 */
-        #content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
-        header { padding: 20px 40px; background: #fff; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
-        .main-body { padding: 40px; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box; }
-        
-        .card { background: #fff; border-radius: 16px; border: 1px solid var(--border); padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-        .chart-wrapper { height: 450px; position: relative; }
-        .controls { display: flex; gap: 10px; }
-        select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: #fff; outline: none; }
-        
-        /* 테이블 스타일 */
-        .table-wrapper { overflow-x: auto; margin-top: 20px; border-radius: 12px; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; background: #fff; font-size: 0.9rem; }
-        th { background: #fcfcfc; padding: 12px; text-align: left; border-bottom: 2px solid var(--border); font-weight: 600; }
-        td { padding: 12px; border-bottom: 1px solid var(--border); }
-        tr:last-child td { border-bottom: none; }
-        tr:hover { background: #f8f9ff; }
-        .increase-tag { color: var(--accent); font-weight: 700; }
+        /* 메인 영역 */
+        #content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        header { padding: 20px 40px; background: #fff; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+        .main-body { padding: 40px; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+        
+        .card { background: #fff; border-radius: 16px; border: 1px solid var(--border); padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .chart-wrapper { height: 450px; position: relative; }
+        .controls { display: flex; gap: 10px; }
+        select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: #fff; outline: none; }
+        
+        /* 테이블 스타일 */
+        .table-wrapper { overflow-x: auto; margin-top: 20px; border-radius: 12px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; background: #fff; font-size: 0.9rem; }
+        th { background: #fcfcfc; padding: 12px; text-align: left; border-bottom: 2px solid var(--border); font-weight: 600; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); }
+        .sum-row { background: #f0f8ff !important; font-weight: bold; color: var(--accent); } /* 월 합계 강조 */
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #f8f9ff; }
+        .increase-tag { color: var(--accent); font-weight: 700; }
 
-        .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
-        .btn-primary { background: var(--accent); color: #fff; }
-        .btn-outline { background: #fff; border: 1px solid var(--border); width: 100%; }
-        .btn-danger { background: none; color: var(--danger); border: 1px solid var(--danger); padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; margin-top: 8px; align-self: flex-start; }
-        .btn-danger:hover { background: var(--danger); color: #fff; }
-        
-        #loading { position: fixed; inset: 0; background: #fff; z-index: 1000; display: flex; justify-content: center; align-items: center; font-weight: 700; }
-        .channel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 20px; }
-        .channel-card { background: #fff; border: 1px solid var(--border); padding: 15px; border-radius: 12px; font-size: 0.85rem; display: flex; flex-direction: column; justify-content: space-between; min-height: 100px; }
-        .logout-link { font-size: 0.7rem; color: #999; text-decoration: underline; cursor: pointer; margin-top: 10px; display: block; text-align: center; }
-    </style>
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-outline { background: #fff; border: 1px solid var(--border); width: 100%; }
+        .btn-danger { background: none; color: var(--danger); border: 1px solid var(--danger); padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; margin-top: 8px; align-self: flex-start; }
+        .btn-danger:hover { background: var(--danger); color: #fff; }
+        
+        #loading { position: fixed; inset: 0; background: #fff; z-index: 1000; display: flex; justify-content: center; align-items: center; font-weight: 700; }
+        .channel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 20px; }
+        .channel-card { background: #fff; border: 1px solid var(--border); padding: 15px; border-radius: 12px; font-size: 0.85rem; display: flex; flex-direction: column; justify-content: space-between; min-height: 100px; }
+        .logout-link { font-size: 0.7rem; color: #999; text-decoration: underline; cursor: pointer; margin-top: 10px; display: block; text-align: center; }
+    </style>
 </head>
 <body>
-    <div id="loading">데이터를 정밀 분석 중입니다...</div>
+    <div id="loading">데이터를 정밀 분석 중입니다...</div>
 
-    <div id="sidebar">
-        <div class="sidebar-header"><div class="logo" onclick="location.reload()">HYOCHIVE</div></div>
-        <div class="group-list">
-            <div class="menu-label">내 분석 목록</div>
-            <div class="group-item active" id="menu-all" onclick="selectMenu('all', this)">📊 전체 채널 분석</div>
-            <div id="customGroupList"></div>
-            <div style="margin-top:20px;" class="menu-label">시장 분석</div>
-            <div class="group-item" id="menu-market" onclick="selectMenu('market', this)">🔥 카테고리 트렌드</div>
-        </div>
-        <div class="sidebar-footer">
-            <button class="btn btn-outline" onclick="createNewGroup()">+ 새 분석 그룹 추가</button>
-            <span class="logout-link" onclick="logout()">로그아웃(비밀번호 재설정)</span>
-        </div>
-    </div>
+    <div id="sidebar">
+        <div class="sidebar-header"><div class="logo" onclick="location.reload()">HYOCHIVE</div></div>
+        <div class="group-list">
+            <div class="menu-label">내 분석 목록</div>
+            <div class="group-item active" id="menu-all" onclick="selectMenu('all', this)">📊 전체 채널 분석</div>
+            <div id="customGroupList"></div>
+            <div style="margin-top:20px;" class="menu-label">시장 분석</div>
+            <div class="group-item" id="menu-market" onclick="selectMenu('market', this)">🔥 카테고리 트렌드</div>
+        </div>
+        <div class="sidebar-footer">
+            <button class="btn btn-outline" onclick="createNewGroup()">+ 새 분석 그룹 추가</button>
+            <span class="logout-link" onclick="logout()">로그아웃(비밀번호 재설정)</span>
+        </div>
+    </div>
 
-    <div id="content">
-        <header>
-            <h2 id="viewTitle">전체 채널 분석</h2>
-            <div class="controls">
-                <select id="rangeSelect" onchange="refreshContent()">
-                    <option value="7">최근 7일</option>
-                    <option value="30">최근 30일</option>
-                </select>
-                <button class="btn btn-primary" id="addBtn" style="display:none;" onclick="addChannelsToGroup()">+ 채널 추가</button>
-            </div>
-        </header>
+    <div id="content">
+        <header>
+            <h2 id="viewTitle">전체 채널 분석</h2>
+            <div class="controls">
+                <select id="rangeSelect" onchange="refreshContent()">
+                    <option value="7">최근 7일</option>
+                    <option value="30">최근 30일</option>
+                    <option value="90">최근 90일</option>
+                </select>
+                <button class="btn btn-primary" id="addBtn" style="display:none;" onclick="addChannelsToGroup()">+ 채널 추가</button>
+            </div>
+        </header>
 
-        <div class="main-body">
-            <div class="card">
-                <div class="chart-wrapper"><canvas id="mainChart"></canvas></div>
-            </div>
-            
-            <div id="dataSection">
-                <h3 id="tableTitle">데이터 상세 (당일 증가량)</h3>
-                <div class="table-wrapper">
-                    <table id="dataTable">
-                        <thead><tr id="tableHeader"></tr></thead>
-                        <tbody id="tableBody"></tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="main-body">
+            <div class="card">
+                <div class="chart-wrapper"><canvas id="mainChart"></canvas></div>
+            </div>
+            
+            <div id="dataSection">
+                <h3 id="tableTitle">데이터 상세 (월간 합계 포함)</h3>
+                <div class="table-wrapper">
+                    <table id="dataTable">
+                        <thead><tr id="tableHeader"></tr></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
 
-            <div id="listSection" style="margin-top:40px;">
-                <h3>소속 채널 관리</h3>
-                <div id="channelGrid" class="channel-grid"></div>
-            </div>
-        </div>
-    </div>
+            <div id="listSection" style="margin-top:40px;">
+                <h3>소속 채널 관리</h3>
+                <div id="channelGrid" class="channel-grid"></div>
+            </div>
+        </div>
+    </div>
 
-    <script>
-        const WORKER_URL = "https://yt-analytics-worker.dustmdwjd.workers.dev";
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbz3Cmdj2MfpHvzx6RCr_Dyjry8odQAFidjYLDUaM12ZVx6vnk8RFobjn90M93AAOx9D/exec";
-        
-        let userPw = "", channelList = [], rawStats = [], trendStats = [], currentMode = "all", chart;
+    <script>
+        const WORKER_URL = "https://yt-analytics-worker.dustmdwjd.workers.dev";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbz3Cmdj2MfpHvzx6RCr_Dyjry8odQAFidjYLDUaM12ZVx6vnk8RFobjn90M93AAOx9D/exec";
+        
+        let userPw = "", channelList = [], rawStats = [], trendStats = [], currentMode = "all", chart;
 
-        async function init() {
-            const savedPw = localStorage.getItem('hyochive_pw');
-            if (savedPw) { userPw = savedPw; await checkAuthAndLoad(); } 
-            else { promptPassword(); }
-        }
+        async function init() {
+            const savedPw = localStorage.getItem('hyochive_pw');
+            if (savedPw) { userPw = savedPw; await checkAuthAndLoad(); } 
+            else { promptPassword(); }
+        }
 
-        async function promptPassword() {
-            userPw = prompt("비밀번호를 입력하세요:");
-            if (userPw === "qwer") { localStorage.setItem('hyochive_pw', userPw); await checkAuthAndLoad(); } 
-            else { alert("비밀번호가 틀렸습니다."); location.reload(); }
-        }
+        async function promptPassword() {
+            userPw = prompt("비밀번호를 입력하세요:");
+            if (userPw === "qwer") { localStorage.setItem('hyochive_pw', userPw); await checkAuthAndLoad(); } 
+            else { alert("비밀번호가 틀렸습니다."); location.reload(); }
+        }
 
-        async function checkAuthAndLoad() {
-            try {
-                const res = await fetch(`${WORKER_URL}?pw=${userPw}`);
-                if (res.status === 401) { localStorage.removeItem('hyochive_pw'); location.reload(); return; }
-                const data = await res.json();
-                channelList = data.channels || [];
-                rawStats = data.stats || [];
-                trendStats = data.trends || [];
-                updateSidebarGroups();
-                refreshContent();
-                document.getElementById('loading').style.display = 'none';
-            } catch (e) { alert("연결 실패"); }
-        }
+        async function checkAuthAndLoad() {
+            try {
+                const res = await fetch(`${WORKER_URL}?pw=${userPw}`);
+                if (res.status === 401) { localStorage.removeItem('hyochive_pw'); location.reload(); return; }
+                const data = await res.json();
+                channelList = data.channels || [];
+                rawStats = data.stats || [];
+                trendStats = data.trends || [];
+                updateSidebarGroups();
+                refreshContent();
+                document.getElementById('loading').style.display = 'none';
+            } catch (e) { alert("연결 실패"); }
+        }
 
-        function refreshContent() {
-            if (currentMode === 'market') renderMarketView();
-            else renderChannelView();
-            updateGrid();
-        }
+        function refreshContent() {
+            if (currentMode === 'market') renderMarketView();
+            else renderChannelView();
+            updateGrid();
+        }
 
-        function renderChannelView() {
-            const days = parseInt(document.getElementById('rangeSelect').value);
-            const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
-            let filtered = rawStats.filter(r => new Date(r.date) >= cutoff);
+        function renderChannelView() {
+            const days = parseInt(document.getElementById('rangeSelect').value);
+            const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
+            let filtered = rawStats.filter(r => new Date(r.date) >= cutoff);
 
-            if (currentMode !== 'all') {
-                const targetIds = channelList.filter(c => c.group_name === currentMode).map(c => c.channel_id);
-                filtered = filtered.filter(r => targetIds.includes(r.channel_id));
-            }
+            if (currentMode !== 'all') {
+                const targetIds = channelList.filter(c => c.group_name === currentMode).map(c => c.channel_id);
+                filtered = filtered.filter(r => targetIds.includes(r.channel_id));
+            }
 
-            const labels = [...new Set(filtered.map(r => r.date))].sort().reverse(); // 최신순
-            const channelIds = [...new Set(filtered.map(r => r.channel_id))];
+            const labels = [...new Set(filtered.map(r => r.date))].sort().reverse(); 
+            const channelIds = [...new Set(filtered.map(r => r.channel_id))];
 
-            // 그래프용 데이터 (정방향)
-            const chartLabels = [...labels].reverse();
-            const datasets = channelIds.map(id => {
-                const ch = channelList.find(c => c.channel_id === id);
-                return {
-                    label: ch && ch.channel_name ? ch.channel_name : id,
-                    data: chartLabels.map(l => {
-                        const found = filtered.find(r => r.date === l && r.channel_id === id);
-                        return found ? found.daily_views : 0;
-                    }),
-                    borderColor: '#' + Math.floor(Math.random()*16777215).toString(16),
-                    tension: 0.3
-                };
-            });
-            drawChart(chartLabels, datasets);
+            const chartLabels = [...labels].reverse();
+            const datasets = channelIds.map(id => {
+                const ch = channelList.find(c => c.channel_id === id);
+                return {
+                    label: ch && ch.channel_name ? ch.channel_name : id,
+                    data: chartLabels.map(l => {
+                        const found = filtered.find(r => r.date === l && r.channel_id === id);
+                        return found ? found.daily_views : 0;
+                    }),
+                    borderColor: `hsl(${(channelIds.indexOf(id) * 137) % 360}, 70%, 50%)`,
+                    tension: 0.3
+                };
+            });
+            drawChart(chartLabels, datasets);
+            buildTable(labels, channelIds, filtered, 'channel');
+        }
 
-            // 표 데이터 (역방향 - 최신날짜 상단)
-            buildTable(labels, channelIds, filtered, 'channel');
-        }
+        function renderMarketView() {
+            const days = parseInt(document.getElementById('rangeSelect').value);
+            const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
+            let filtered = trendStats.filter(r => new Date(r.date) >= cutoff);
 
-        function renderMarketView() {
-            const labels = [...new Set(trendStats.map(r => r.date))].sort().reverse();
-            const categoryNames = [...new Set(trendStats.map(r => r.category_name))];
+            const labels = [...new Set(filtered.map(r => r.date))].sort().reverse();
+            const categoryNames = [...new Set(filtered.map(r => r.category_name))];
 
-            const chartLabels = [...labels].reverse();
-            const datasets = categoryNames.map(name => ({
-                label: name,
-                data: chartLabels.map(l => {
-                    const found = trendStats.find(r => r.date === l && r.category_name === name);
-                    return found ? found.daily_increase : 0;
-                }),
-                borderColor: '#' + Math.floor(Math.random()*16777215).toString(16),
-                tension: 0.3
-            }));
-            drawChart(chartLabels, datasets);
+            const chartLabels = [...labels].reverse();
+            const datasets = categoryNames.map(name => ({
+                label: name,
+                data: chartLabels.map(l => {
+                    const found = filtered.find(r => r.date === l && r.category_name === name);
+                    return found ? found.daily_increase : 0;
+                }),
+                borderColor: `hsl(${(categoryNames.indexOf(name) * 137) % 360}, 70%, 50%)`,
+                tension: 0.3
+            }));
+            drawChart(chartLabels, datasets);
+            buildTable(labels, categoryNames, filtered, 'market');
+        }
 
-            buildTable(labels, categoryNames, trendStats, 'market');
-        }
+        function buildTable(dates, items, data, type) {
+            const header = document.getElementById('tableHeader');
+            const body = document.getElementById('tableBody');
+            header.innerHTML = `<th>일자</th>` + items.map(id => {
+                const name = type === 'channel' ? (channelList.find(c => c.channel_id === id)?.channel_name || id) : id;
+                return `<th>${name}</th>`;
+            }).join('');
 
-        function buildTable(dates, items, data, type) {
-            const header = document.getElementById('tableHeader');
-            const body = document.getElementById('tableBody');
-            header.innerHTML = `<th>일자</th>` + items.map(id => {
-                const name = type === 'channel' ? (channelList.find(c => c.channel_id === id)?.channel_name || id) : id;
-                return `<th>${name}</th>`;
-            }).join('');
+            let html = "";
+            let monthlySums = {};
+            let currentMonth = "";
 
-            body.innerHTML = dates.map(date => {
-                return `<tr>
-                    <td><strong>${date}</strong></td>
-                    ${items.map(item => {
-                        const found = data.find(d => d.date === date && (type === 'channel' ? d.channel_id === item : d.category_name === item));
-                        const val = found ? (type === 'channel' ? found.daily_views : found.daily_increase) : 0;
-                        return `<td><span class="increase-tag">+${val.toLocaleString()}</span></td>`;
-                    }).join('')}
-                </tr>`;
-            }).join('');
-        }
+            dates.forEach((date, index) => {
+                const month = date.substring(0, 7); // YYYY-MM
+                
+                // 월이 바뀌면 이전 월의 합계를 먼저 출력 (최신순이므로 월의 상단에 합계가 위치)
+                if (currentMonth !== "" && currentMonth !== month) {
+                    html += renderSumRow(currentMonth, items, monthlySums[currentMonth]);
+                }
 
-        function drawChart(labels, datasets) {
-            if (chart) chart.destroy();
-            chart = new Chart(document.getElementById('mainChart'), {
-                type: 'line', data: { labels, datasets },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-            });
-        }
+                if (!monthlySums[month]) monthlySums[month] = {};
+                currentMonth = month;
 
-        function updateGrid() {
-            const grid = document.getElementById('channelGrid');
-            const target = currentMode === 'all' ? channelList : channelList.filter(c => c.group_name === currentMode);
-            grid.innerHTML = target.map(c => `
-                <div class="channel-card">
-                    <div><strong>${c.channel_name || '수집대기'}</strong><br><small>${c.channel_id}</small></div>
-                    <button class="btn-danger" onclick="deleteChannel('${c.channel_id}')">삭제</button>
-                </div>
-            `).join('');
-        }
+                let rowHtml = `<td><strong>${date}</strong></td>`;
+                items.forEach(item => {
+                    const found = data.find(d => d.date === date && (type === 'channel' ? d.channel_id === item : d.category_name === item));
+                    const val = found ? (type === 'channel' ? found.daily_views : found.daily_increase) : 0;
+                    monthlySums[month][item] = (monthlySums[month][item] || 0) + val;
+                    rowHtml += `<td><span class="increase-tag">+${val.toLocaleString()}</span></td>`;
+                });
+                html += `<tr>${rowHtml}</tr>`;
 
-        function selectMenu(mode, el) {
-            currentMode = mode;
-            document.querySelectorAll('.group-item').forEach(i => i.classList.remove('active'));
-            el.classList.add('active');
-            document.getElementById('viewTitle').innerText = (mode === 'all') ? '전체 채널 분석' : (mode === 'market' ? '카테고리 트렌드' : mode);
-            document.getElementById('addBtn').style.display = (mode !== 'all' && mode !== 'market') ? 'block' : 'none';
-            document.getElementById('listSection').style.display = (mode === 'market') ? 'none' : 'block';
-            refreshContent();
-        }
+                // 마지막 루프에서 마지막 월 합계 출력
+                if (index === dates.length - 1) {
+                    html += renderSumRow(month, items, monthlySums[month]);
+                }
+            });
 
-        function updateSidebarGroups() {
-            const container = document.getElementById('customGroupList');
-            container.innerHTML = "";
-            const groups = [...new Set(channelList.map(c => c.group_name))].filter(g => g && g !== 'null');
-            groups.forEach(g => {
-                const div = document.createElement('div');
-                div.className = "group-item";
-                if (currentMode === g) div.classList.add('active');
-                div.innerText = "📁 " + g;
-                div.onclick = () => selectMenu(g, div);
-                container.appendChild(div);
-            });
-        }
+            body.innerHTML = html;
+        }
 
-        async function addChannelsToGroup() {
-            const input = prompt("ID 또는 핸들(@) 입력 (콤마 구분)");
-            if (!input) return;
-            const items = input.split(',').map(s => s.trim());
-            for (const val of items) {
-                await fetch(`${WORKER_URL}/add-channel?pw=${userPw}`, {
-                    method: 'POST', body: JSON.stringify({ channelId: val, channelName: val, groupName: currentMode })
-                });
-            }
-            fetch(GAS_URL, { method: 'POST', mode: 'no-cors' });
-            location.reload();
-        }
+        function renderSumRow(month, items, sums) {
+            let rowHtml = `<td class="sum-row"><strong>${month} 합계</strong></td>`;
+            items.forEach(item => {
+                const total = sums[item] || 0;
+                rowHtml += `<td class="sum-row"><strong>+${total.toLocaleString()}</strong></td>`;
+            });
+            return `<tr class="sum-row">${rowHtml}</tr>`;
+        }
 
-        async function deleteChannel(id) {
-            if (!confirm("삭제하시겠습니까?")) return;
-            await fetch(`${WORKER_URL}/delete-channel?pw=${userPw}`, { method: 'POST', body: JSON.stringify({ channelId: id }) });
-            location.reload();
-        }
+        function drawChart(labels, datasets) {
+            if (chart) chart.destroy();
+            chart = new Chart(document.getElementById('mainChart'), {
+                type: 'line', data: { labels, datasets },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
 
-        function createNewGroup() {
-            const name = prompt("새 그룹 이름:");
-            if (name) {
-                channelList.push({ channel_id: 'TEMP_'+Date.now(), channel_name: '첫 채널 추가 대기', group_name: name });
-                updateSidebarGroups();
-            }
-        }
+        function updateGrid() {
+            const grid = document.getElementById('channelGrid');
+            const target = currentMode === 'all' ? channelList : channelList.filter(c => c.group_name === currentMode);
+            grid.innerHTML = target.map(c => `
+                <div class="channel-card">
+                    <div><strong>${c.channel_name || '수집대기'}</strong><br><small>${c.channel_id}</small></div>
+                    <button class="btn-danger" onclick="deleteChannel('${c.channel_id}')">삭제</button>
+                </div>
+            `).join('');
+        }
 
-        function logout() { localStorage.removeItem('hyochive_pw'); location.reload(); }
+        function selectMenu(mode, el) {
+            currentMode = mode;
+            document.querySelectorAll('.group-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('viewTitle').innerText = (mode === 'all') ? '전체 채널 분석' : (mode === 'market' ? '카테고리 트렌드' : mode);
+            document.getElementById('addBtn').style.display = (mode !== 'all' && mode !== 'market') ? 'block' : 'none';
+            document.getElementById('listSection').style.display = (mode === 'market') ? 'none' : 'block';
+            refreshContent();
+        }
 
-        init();
-    </script>
+        function updateSidebarGroups() {
+            const container = document.getElementById('customGroupList');
+            container.innerHTML = "";
+            const groups = [...new Set(channelList.map(c => c.group_name))].filter(g => g && g !== 'null' && g !== "");
+            groups.forEach(g => {
+                const div = document.createElement('div');
+                div.className = "group-item";
+                if (currentMode === g) div.classList.add('active');
+                div.innerText = "📁 " + g;
+                div.onclick = () => selectMenu(g, div);
+                container.appendChild(div);
+            });
+        }
+
+        async function addChannelsToGroup() {
+            const input = prompt("ID 또는 핸들(@) 입력 (콤마 구분)");
+            if (!input) return;
+            const items = input.split(',').map(s => s.trim());
+            for (const val of items) {
+                await fetch(`${WORKER_URL}/add-channel?pw=${userPw}`, {
+                    method: 'POST', body: JSON.stringify({ channelId: val, channelName: val, groupName: currentMode })
+                });
+            }
+            fetch(GAS_URL, { method: 'POST', mode: 'no-cors' });
+            location.reload();
+        }
+
+        async function deleteChannel(id) {
+            if (!confirm("삭제하시겠습니까?")) return;
+            await fetch(`${WORKER_URL}/delete-channel?pw=${userPw}`, { method: 'POST', body: JSON.stringify({ channelId: id }) });
+            location.reload();
+        }
+
+        function createNewGroup() {
+            const name = prompt("새 그룹 이름:");
+            if (name) {
+                channelList.push({ channel_id: 'TEMP_'+Date.now(), channel_name: '첫 채널 추가 대기', group_name: name });
+                updateSidebarGroups();
+            }
+        }
+
+        function logout() { localStorage.removeItem('hyochive_pw'); location.reload(); }
+
+        init();
+    </script>
 </body>
 </html>
